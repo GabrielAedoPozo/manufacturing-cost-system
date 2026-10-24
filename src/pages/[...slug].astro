@@ -1,0 +1,77 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { ArrowLeft, ArrowRight, Construction } from '@lucide/astro';
+import Layout from '../layouts/layout.astro';
+import Hero from '../components/hero.astro';
+import { ROUTES, type Route } from '../config/routes';
+
+// Muestra "En construcción" en cada ruta de ROUTES que aún no tiene su propia página.
+// Al crear una página real (p. ej. pages/productos.astro) esa ruta deja de generarse aquí.
+export const getStaticPaths = (() => {
+  const builtPages = new Set(
+    Object.keys(import.meta.glob('./**/*.astro'))
+      .filter((file) => !file.includes('['))
+      .map((file) => file.replace(/^\.\/|\.astro$/g, '').replace(/(^|\/)index$/, '')),
+  );
+  const routes: Route[] = Object.values(ROUTES);
+
+  return routes
+    .filter(({ path }) => !builtPages.has(path.slice(1)))
+    .map(({ path, label }) => ({
+      params: { slug: path.slice(1) },
+      props: {
+        label,
+        // Subrutas ya construidas (p. ej. /ordenes/nueva en /ordenes): se ofrecen como acceso directo.
+        builtChildren: routes.filter(
+          (child) => child.path.startsWith(`${path}/`) && builtPages.has(child.path.slice(1)),
+        ),
+      },
+    }));
+}) satisfies GetStaticPaths;
+
+const { label, builtChildren } = Astro.props;
+---
+
+<Layout title={label}>
+  <Hero title={label} />
+  <section class="mt-6 grid min-h-[60vh] place-items-center">
+    <div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-10 text-center">
+      <span class="mx-auto grid size-14 place-items-center rounded-2xl bg-amber-50 text-amber-600">
+        <Construction class="size-7" aria-hidden="true" />
+      </span>
+      <h2 class="mt-5 text-2xl font-semibold tracking-tight text-slate-900">En construcción</h2>
+      <p class="mt-2 text-sm text-slate-500">
+        {
+          builtChildren.length > 0
+            ? 'Esta sección estará completa próximamente. Mientras tanto ya puedes usar:'
+            : 'Esta sección estará disponible próximamente.'
+        }
+      </p>
+      <div class="mt-6 flex flex-wrap justify-center gap-2">
+        {
+          builtChildren.map(({ path, label, shortLabel }) => (
+            <a
+              href={path}
+              class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              {shortLabel ?? label}
+              <ArrowRight class="size-4" aria-hidden="true" />
+            </a>
+          ))
+        }
+        <a
+          href={ROUTES.home.path}
+          class:list={[
+            'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium',
+            builtChildren.length > 0
+              ? 'border border-slate-200 text-slate-700 hover:bg-slate-50'
+              : 'bg-blue-600 text-white hover:bg-blue-700',
+          ]}
+        >
+          <ArrowLeft class="size-4" aria-hidden="true" />
+          Volver al inicio
+        </a>
+      </div>
+    </div>
+  </section>
+</Layout>

@@ -1,11 +1,51 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+import { ChevronRight, ClipboardPlus, PackagePlus } from '@lucide/astro';
+import Layout from '../layouts/layout.astro';
+import Hero from '../components/hero.astro';
+import Dashboard from '../components/dashboard';
+import { ROUTES } from '../config/routes';
+import { lineSettings, orders, products, rawMaterials, recipes, REFERENCE_MONTH } from '../data/mock';
+import { costOrders } from '../utils/cost-calculation';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const costedOrders = costOrders(orders, products, recipes, { rawMaterials, lineSettings });
+
+const quickActions = [
+  { ...ROUTES.newOrder, description: 'Calcula el costo estimado de un lote', icon: ClipboardPlus },
+  { ...ROUTES.newProduct, description: 'Agrega un producto con su receta', icon: PackagePlus },
+];
 ---
 
-<Layout>
-	<Welcome />
+<Layout title="Inicio">
+  <Hero title="Hola, Gabriel" subtitle="Aquí tienes un resumen de la producción y costos de tu empresa." showDate />
+  <div class="mt-6 space-y-4">
+    <Dashboard client:load orders={costedOrders} month={REFERENCE_MONTH} />
+
+    <section class="rounded-2xl border border-slate-200 bg-white p-5">
+      <h2 class="text-base font-semibold text-slate-900">Accesos rápidos</h2>
+      <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+        {
+          quickActions.map(({ path, label, description, icon: Icon }) => (
+            <li>
+              <a
+                href={path}
+                class="group/action flex h-full items-center gap-3 rounded-xl border border-slate-200 p-3 transition-colors hover:border-blue-200 hover:bg-blue-50/50"
+              >
+                <span class="grid size-10 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-600">
+                  <Icon class="size-5" aria-hidden="true" />
+                </span>
+                <span class="min-w-0 flex-1">
+                  <span class="block text-sm font-medium text-slate-900">{label}</span>
+                  <span class="block text-xs text-slate-500">{description}</span>
+                </span>
+                <ChevronRight
+                  class="size-4 shrink-0 text-slate-400 transition-transform group-hover/action:translate-x-0.5"
+                  aria-hidden="true"
+                />
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </div>
 </Layout>

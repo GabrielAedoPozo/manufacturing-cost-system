@@ -1,0 +1,43 @@
+---
+import { CalendarDays } from '@lucide/astro';
+import { formatLongDate, toIsoDate } from '../utils/format';
+
+/** Encabezado de página: título, subtítulo y, si se pide, la fecha de hoy a la derecha. */
+interface Props {
+  title: string;
+  subtitle?: string;
+  showDate?: boolean;
+}
+
+const { title, subtitle, showDate = false } = Astro.props;
+const today = new Date();
+---
+
+<section class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <h1 class="text-3xl font-semibold tracking-tight text-slate-900">{title}</h1>
+    {subtitle && <p class="mt-1 text-slate-500">{subtitle}</p>}
+  </div>
+  {
+    showDate && (
+      <p class="flex items-center gap-2 text-sm text-slate-600">
+        <CalendarDays class="size-4 text-slate-400" aria-hidden="true" />
+        <time data-today datetime={toIsoDate(today)}>
+          {formatLongDate(today)}
+        </time>
+      </p>
+    )
+  }
+</section>
+
+<script>
+  import { formatLongDate, toIsoDate } from '../utils/format';
+
+  // En un build estático la fecha del HTML es la del build: se actualiza en el navegador.
+  const time = document.querySelector<HTMLTimeElement>('[data-today]');
+  if (time) {
+    const now = new Date();
+    time.dateTime = toIsoDate(now);
+    time.textContent = formatLongDate(now);
+  }
+</script>

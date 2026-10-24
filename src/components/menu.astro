@@ -1,0 +1,166 @@
+---
+import {
+  Boxes,
+  ClipboardList,
+  HardHat,
+  House,
+  Layers,
+  Menu as MenuIcon,
+  Package,
+  X,
+} from '@lucide/astro';
+import { ROUTES } from '../config/routes';
+
+const sections = [
+  {
+    title: 'Operación',
+    items: [
+      { ...ROUTES.home, icon: House },
+      { ...ROUTES.orders, icon: ClipboardList },
+    ],
+  },
+  {
+    title: 'Catálogo',
+    items: [{ ...ROUTES.products, icon: Package }],
+  },
+  {
+    title: 'Datos base',
+    items: [
+      { ...ROUTES.rawMaterials, icon: Boxes },
+      { ...ROUTES.labor, icon: HardHat },
+      { ...ROUTES.overhead, icon: Layers },
+    ],
+  },
+];
+
+// "/ordenes/" y "/ordenes" son la misma ruta; las subrutas (/ordenes/nueva) activan a su padre.
+const currentPath = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const isActive = (path: string) =>
+  path === '/' ? currentPath === '/' : currentPath === path || currentPath.startsWith(`${path}/`);
+---
+
+<div data-menu class="group">
+  <button
+    type="button"
+    data-menu-open
+    aria-controls="app-menu"
+    aria-expanded="false"
+    class="fixed top-4 left-4 z-30 inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 lg:hidden"
+  >
+    <MenuIcon class="size-5" aria-hidden="true" />
+    Menú
+  </button>
+
+  <div
+    data-menu-backdrop
+    aria-hidden="true"
+    class="pointer-events-none fixed inset-0 z-40 bg-slate-900/40 opacity-0 transition-opacity group-data-[open=true]:pointer-events-auto group-data-[open=true]:opacity-100 lg:hidden"
+  >
+  </div>
+
+  <aside
+    id="app-menu"
+    class="fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200 bg-white transition-[translate,visibility] duration-200 max-lg:invisible max-lg:-translate-x-full max-lg:group-data-[open=true]:visible max-lg:group-data-[open=true]:translate-x-0"
+  >
+    <div class="flex items-center justify-between gap-2 px-5 pt-6 pb-5">
+      <a href={ROUTES.home.path} class="flex items-center gap-3">
+        <svg viewBox="0 0 40 40" class="size-10 shrink-0" aria-hidden="true">
+          <path
+            d="M20 2.5 35.2 11.25v17.5L20 37.5 4.8 28.75v-17.5z"
+            fill="#1e3a8a"
+            stroke="#1e3a8a"
+            stroke-width="3"
+            stroke-linejoin="round"></path>
+          <text
+            x="20"
+            y="26.5"
+            text-anchor="middle"
+            font-size="18"
+            font-weight="700"
+            fill="#fff"
+            font-family="Onest, sans-serif">G</text>
+        </svg>
+        <span class="leading-tight">
+          <span class="block text-base font-bold tracking-tight text-slate-900">GAP SYSTEM</span>
+          <span class="block text-xs text-slate-500">Manufacturing Cost System</span>
+        </span>
+      </a>
+      <button
+        type="button"
+        data-menu-close
+        aria-label="Cerrar menú"
+        class="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 lg:hidden"
+      >
+        <X class="size-5" aria-hidden="true" />
+      </button>
+    </div>
+
+    <nav aria-label="Menú principal" class="flex-1 overflow-y-auto px-3">
+      {
+        sections.map(({ title, items }) => (
+          <div class="mb-5">
+            <p class="px-3 pb-2 text-xs font-semibold text-slate-500">{title}</p>
+            <ul class="space-y-1">
+              {items.map(({ path, label, icon: Icon }) => (
+                <li>
+                  <a
+                    href={path}
+                    aria-current={isActive(path) ? 'page' : undefined}
+                    class:list={[
+                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      isActive(path)
+                        ? 'bg-blue-50 text-blue-700'
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+                    ]}
+                  >
+                    <Icon class="size-4.5 shrink-0" aria-hidden="true" />
+                    {label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </nav>
+
+    <div class="px-8 py-5 text-xs text-slate-400">
+      <p class="font-medium text-slate-500">GAP SYSTEM v1.0.0</p>
+      <p>Tu producción, bajo control.</p>
+    </div>
+  </aside>
+</div>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-menu]');
+  const openButton = root?.querySelector<HTMLButtonElement>('[data-menu-open]');
+  const closeButton = root?.querySelector<HTMLButtonElement>('[data-menu-close]');
+  const backdrop = root?.querySelector<HTMLElement>('[data-menu-backdrop]');
+  const desktop = window.matchMedia('(min-width: 64rem)');
+
+  function setOpen(open: boolean) {
+    if (!root || !openButton) return;
+    root.dataset.open = String(open);
+    openButton.setAttribute('aria-expanded', String(open));
+    document.body.classList.toggle('overflow-hidden', open);
+  }
+
+  function close() {
+    setOpen(false);
+    openButton?.focus();
+  }
+
+  openButton?.addEventListener('click', () => {
+    setOpen(true);
+    closeButton?.focus();
+  });
+  closeButton?.addEventListener('click', close);
+  backdrop?.addEventListener('click', close);
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && root?.dataset.open === 'true') close();
+  });
+  // Si la pantalla crece hasta escritorio con el menú abierto, se libera el scroll.
+  desktop.addEventListener('change', (event) => {
+    if (event.matches) setOpen(false);
+  });
+</script>

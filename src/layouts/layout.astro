@@ -1,0 +1,35 @@
+---
+import '@fontsource/onest/400.css';
+import '@fontsource/onest/500.css';
+import '@fontsource/onest/600.css';
+import '@fontsource/onest/700.css';
+import '../styles/global.css';
+import Menu from '../components/menu.astro';
+
+interface Props {
+  /** Título de la página; se muestra en la pestaña del navegador. */
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title} | GAP SYSTEM</title>
+  </head>
+  <body class="min-h-dvh bg-slate-50 font-sans text-slate-900 antialiased">
+    <Menu />
+    <div class="lg:pl-64">
+      <main class="mx-auto max-w-360 px-4 pt-20 pb-10 sm:px-6 lg:px-8 lg:pt-8">
+        <slot />
+      </main>
+    </div>
+  </body>
+</html>
